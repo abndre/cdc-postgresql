@@ -18,14 +18,33 @@ docker-compose exec debezium curl -i -X POST -H "Accept:application/json" -H "Co
     "database.port": "5432",
     "database.user": "postgres",
     "database.password": "postgres",
-    "database.dbname": "my-data-gold",
+    "database.dbname": "my_data_gold",
     "database.server.name": "dbserver1",
     "table.include.list": "public.usuarios",
+    "topic.prefix": "dbserver1",
     "database.history.kafka.bootstrap.servers": "kafka:9092",
     "database.history.kafka.topic": "dbhistory.my-connector"
   }
 }' http://debezium:8083/connectors
 
+```
+
+Ou via post:
+
+```
+curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @register-postgres.json
+
+
+curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @register-postgres2.json
+
+```
+
+Você poderá ver os topicos no kafdrop na url localhost:9000
+
+ou via terminal
+
+```
+docker compose exec kafka kafka-topics --list --bootstrap-server localhost:9092
 ```
 
 Inicie o consumer python

@@ -1,28 +1,43 @@
 version: '3'
 services:
+  # postgres:
+  #   image: postgres
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgres
+  #     #- POSTGRES_INITDB_ARGS=--wal-level=logical   # Adiciona essa linha
+  #   command:
+  #     - "postgres"
+  #     - "-c"
+  #     - "wal_level=logical"
+    # volumes:
+    #   - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
   postgres:
-    image: postgres
+    image: debezium/example-postgres:1.9
+    container_name: postgres
     ports:
-      - "5432:5432"
+      - 5432:5432
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
   kafka:
-    image: confluentinc/cp-kafka
+    image: quay.io/debezium/kafka:${DEBEZIUM_VERSION}
     ports:
-      - "9092:9092"
+     - 9092:9092
+    links:
+     - zookeeper
     environment:
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
-      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
-      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=false
-    depends_on:
-      - zookeeper
+     - ZOOKEEPER_CONNECT=zookeeper:2181
   zookeeper:
-    image: confluentinc/cp-zookeeper
+    image: quay.io/debezium/zookeeper:${DEBEZIUM_VERSION}
     ports:
-      - "2181:2181"
+     - 2181:2181
+     - 2888:2888
+     - 3888:3888
   kafdrop:
     image: obsidiandynamics/kafdrop
     ports:
@@ -30,15 +45,15 @@ services:
     environment:
       - KAFKA_BROKERCONNECT=kafka:9092
   debezium:
-    image: debezium/connect:1.6
+    image: quay.io/debezium/connect:${DEBEZIUM_VERSION}
     ports:
-      - "8083:8083"
+     - 8083:8083
+    links:
+     - kafka
+     - postgres
     environment:
-      - BOOTSTRAP_SERVERS=kafka:9092
-      - GROUP_ID=1
-      - CONFIG_STORAGE_TOPIC=my-connect-configs
-      - OFFSET_STORAGE_TOPIC=my-connect-offsets
-      - STATUS_STORAGE_TOPIC=my-connect-status
-      - CONFIG_STORAGE_REPLICATION_FACTOR=1
-      - OFFSET_STORAGE_REPLICATION_FACTOR=1
-      - STATUS_STORAGE_REPLICATION_FACTOR=1
+     - BOOTSTRAP_SERVERS=kafka:9092
+     - GROUP_ID=1
+     - CONFIG_STORAGE_TOPIC=my_connect_configs
+     - OFFSET_STORAGE_TOPIC=my_connect_offsets
+     - STATUS_STORAGE_TOPIC=my_connect_statuses
