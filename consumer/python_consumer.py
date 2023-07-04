@@ -2,7 +2,8 @@ from kafka import KafkaConsumer
 
 # Configurações do Kafka
 bootstrap_servers = 'localhost:9092'
-topic_name = 'dbserver2.user_data.usuarios'
+#topic_name = 'dbserver1.inventory.customers'
+topic_name = 'postgresql.user_data.usuarios'
 
 # Cria o consumidor do Kafka
 consumer = KafkaConsumer(

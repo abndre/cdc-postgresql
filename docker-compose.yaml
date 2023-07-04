@@ -1,29 +1,29 @@
 version: '3'
 services:
-  # postgres:
-  #   image: postgres
-  #   ports:
-  #     - "5432:5432"
-  #   environment:
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_PASSWORD=postgres
-  #     #- POSTGRES_INITDB_ARGS=--wal-level=logical   # Adiciona essa linha
-  #   command:
-  #     - "postgres"
-  #     - "-c"
-  #     - "wal_level=logical"
-    # volumes:
-    #   - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
   postgres:
-    image: debezium/example-postgres:1.9
-    container_name: postgres
+    image: debezium/postgres:13
     ports:
-      - 5432:5432
+      - "5432:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+    # command:
+    #   - "postgres"
+    #   - "-c"
+    #   - "wal_level=logical"
     volumes:
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+      #- ./scripts/alter_user.sql:/docker-entrypoint-initdb.d/alter_user.sql
+  # postgres:
+  #   image: debezium/example-postgres:1.9
+  #   container_name: postgres
+  #   ports:
+  #     - 5432:5432
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgres
+  #   volumes:
+  #     - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
   kafka:
     image: quay.io/debezium/kafka:${DEBEZIUM_VERSION}
     ports:
@@ -57,3 +57,30 @@ services:
      - CONFIG_STORAGE_TOPIC=my_connect_configs
      - OFFSET_STORAGE_TOPIC=my_connect_offsets
      - STATUS_STORAGE_TOPIC=my_connect_statuses
+    healthcheck:
+          test:
+            [
+              'CMD',
+              'curl',
+              '--silent',
+              '--fail',
+              '-X',
+              'GET',
+              'http://localhost:8083/connectors',
+            ]
+          start_period: 10s
+          interval: 10s
+          timeout: 5s
+          retries: 5
+  debezium-ui:
+    image: debezium/debezium-ui:latest
+    restart: always
+    container_name: debezium-ui
+    hostname: debezium-ui
+    depends_on:
+      debezium:
+        condition: service_healthy
+    ports:
+      - '8080:8080'
+    environment:
+      KAFKA_CONNECT_URIS: http://debezium:8083

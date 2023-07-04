@@ -3,6 +3,7 @@
 Inicie o projeto docker
 
 ```
+export DEBEZIUM_VERSION=2.1
 docker compose up -d
 ```
 
